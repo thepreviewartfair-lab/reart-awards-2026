@@ -888,7 +888,7 @@ function toggleArtist(idx) {
   }
 }
 
-function saveArtistScore(idx) {
+async function saveArtistScore(idx) {
   const artist = ARTISTS[idx];
   const s = {
     aesthetics: parseInt(document.getElementById(`slider-${idx}-aesthetics`).value),
@@ -903,8 +903,19 @@ function saveArtistScore(idx) {
   document.getElementById(`panel-${idx}`).classList.remove('open');
   openArtist = null;
 
-  // 자동 저장 (백그라운드)
-  autoSave();
+  // 작가 1명씩 즉시 저장
+  try {
+    await callGAS('saveOneScore', {
+      code: currentJuror.code,
+      name: currentJuror.name,
+      artistName: artist.name,
+      aesthetics: s.aesthetics,
+      discourse: s.discourse,
+      intuition: s.intuition
+    });
+  } catch(e) {
+    console.log('저장 실패, 재시도 예정');
+  }
 }
 
 function refreshArtistUI(idx) {
@@ -937,17 +948,7 @@ function updateProgress() {
   document.getElementById('progress-bar').style.width = pct + '%';
 }
 
-let saveTimer = null;
-function autoSave() {
-  clearTimeout(saveTimer);
-  saveTimer = setTimeout(() => {
-    callGAS('saveScores', {
-      code: currentJuror.code,
-      name: currentJuror.name,
-      scores: scores
-    }).catch(() => {});
-  }, 1000);
-}
+
 
 async function submitAllScores() {
   const done = ARTISTS.filter(a => {
@@ -960,16 +961,7 @@ async function submitAllScores() {
     if (!proceed) return;
   }
 
-  try {
-    await callGAS('saveScores', {
-      code: currentJuror.code,
-      name: currentJuror.name,
-      scores: scores
-    });
-    showScreen('complete');
-  } catch(e) {
-    alert('저장 중 오류가 발생했습니다. 다시 시도해주세요.');
-  }
+  showScreen('complete');
 }
 
 // =============================================
