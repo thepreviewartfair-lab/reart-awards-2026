@@ -758,7 +758,6 @@ function doLogin() {
     errEl.textContent = '';
     document.getElementById('welcome-name').innerHTML = '<strong style="font-weight:700">' + juror.name + '</strong>님, 반갑습니다.';
     showScreen('welcome');
-    loadExistingScores();
   } else {
     errEl.textContent = '코드가 올바르지 않습니다.';
   }
@@ -806,7 +805,17 @@ async function loadExistingScores() {
 // =============================================
 // 심사 화면
 // =============================================
-function startScoring() {
+async function startScoring() {
+  // 로딩 화면 표시
+  document.getElementById('welcome-name').innerHTML += '<br><span style="font-size:13px;color:var(--gray-400);font-weight:300;">심사 데이터 불러오는 중...</span>';
+  
+  try {
+    const data = await callGAS('getScores', { code: currentJuror.code });
+    if (data && typeof data === 'object') scores = data;
+  } catch(e) {
+    console.log('점수 로드 실패');
+  }
+  
   showScreen('scoring');
   buildArtistList();
   updateProgress();
